@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie / Token / JWT / CORS 综合演示</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+    h1 { text-align: center; margin-bottom: 8px; color: #1a1a2e; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h3 {
+      margin-bottom: 12px;
+      color: #1a1a2e;
+      border-bottom: 2px solid #4f46e5;
+      padding-bottom: 8px;
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    button:hover { transform: translateY(-1px); }
+    .btn-primary { background: #4f46e5; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-warning { background: #ea580c; color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-gray { background: #6b7280; color: #fff; }
+
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .success { color: #16a34a; font-weight: bold; }
+    .error { color: #dc2626; font-weight: bold; }
+    .info { color: #4f46e5; font-weight: bold; }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .tip {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 8px 12px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    #origin-display {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+    #origin-display strong { color: #4f46e5; }
+  </style>
+</head>
+<body>
+
+  <h1>🔐 Cookie / Token / JWT / CORS 演示</h1>
+  <p class="subtitle">前后端完整演示 — 打开 F12 看 Network 和 Console</p>
+  <p id="origin-display">📍 当前页面来源：<strong id="origin-text"></strong></p>
+
+  <!-- 1. Cookie 演示 -->
+  <div class="card">
+    <h3>1. Cookie 演示（前后端交互）</h3>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="frontendSetCookie()">前端设置 Cookie</button>
+      <button class="btn-success" onclick="backendSetCookie()">后端设置 Cookie</button>
+      <button class="btn-warning" onclick="backendReadCookie()">后端读取 Cookie</button>
+      <button class="btn-gray" onclick="readAllCookies()">查看所有 Cookie</button>
+    </div>
+    <pre id="cookie-result">点击按钮测试 Cookie 功能...</pre>
+    <div class="tip">💡 Cookie 自动随请求发送；localStorage 不会自动发送，需要手动取出来放到请求里</div>
+  </div>
+
+  <!-- 2. JWT Token 演示 -->
+  <div class="card">
+    <h3>2. Token / JWT 演示（登录 + 受保护接口）</h3>
+    <div style="display: flex; gap: 12px;">
+      <div style="flex: 1;">
+        <input id="login-user" type="text" placeholder="用户名 (admin / zhangsan)" value="admin">
+        <input id="login-pass" type="password" placeholder="密码 (123456)" value="123456">
+        <button class="btn-primary" onclick="doLogin()" style="width:100%;">🔑 登录获取 JWT</button>
+      </div>
+      <div style="flex: 1;">
+        <button class="btn-success" onclick="visitProfile()" style="width:100%;">🔒 访问受保护接口</button>
+        <button class="btn-warning" onclick="parseJWT()" style="width:100%; margin-top:8px;">🔍 解析 JWT 结构</button>
+        <button class="btn-gray" onclick="clearToken()" style="width:100%; margin-top:8px;">🗑 清除 Token</button>
+      </div>
+    </div>
+    <pre id="jwt-result">点击按钮测试 JWT...</pre>
+    <div class="tip">💡 JWT = Base64(Header).Base64(Payload).签名，Payload 任何人都能解码看，但不能改</div>
+  </div>
+
+  <!-- 3. CORS 演示 -->
+  <div class="card">
+    <h3>3. CORS 跨域演示</h3>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="testGet()">GET 请求（简单请求）</button>
+      <button class="btn-success" onclick="testPost()">POST JSON 请求（预检）</button>
+      <button class="btn-warning" onclick="testWithCredentials()">带凭证请求</button>
+    </div>
+    <pre id="cors-result">点击按钮测试 CORS...</pre>
+    <div class="tip">💡 POST JSON 会先发 OPTIONS 预检请求 → F12 Network 可以看到两个请求</div>
+  </div>
+
+  <!-- 4. 综合演示 -->
+  <div class="card">
+    <h3>4. 综合演示（Cookie + Token + CORS 一起）</h3>
+    <button class="btn-primary" onclick="testAll()">🚀 综合测试</button>
+    <pre id="all-result">点击按钮查看综合结果...</pre>
+  </div>
+
+<script>
+document.getElementById('origin-text').textContent = window.location.origin;
+
+let storedToken = '';
+
+// ==================== Cookie ====================
+function frontendSetCookie() {
+  document.cookie = "demo_cookie=frontend_set_value; path=/; max-age=3600";
+  document.getElementById('cookie-result').innerHTML =
+    '<span class="success">✅ 前端已设置 Cookie: demo_cookie=frontend_set_value</span>';
+}
+
+async function backendSetCookie() {
+  const res = await fetch('/api/set-cookie', { credentials: 'include' });
+  const data = await res.json();
+  document.getElementById('cookie-result').innerHTML =
+    '<span class="success">✅ ' + data.message + '</span>\n' +
+    '提示：打开 F12 → Application → Cookies 查看';
+}
+
+async function backendReadCookie() {
+  const res = await fetch('/api/read-cookie', { credentials: 'include' });
+  const data = await res.json();
+  document.getElementById('cookie-result').innerHTML =
+    JSON.stringify(data, null, 2);
+}
+
+function readAllCookies() {
+  document.getElementById('cookie-result').innerHTML =
+    '当前所有 Cookie:\n' + (document.cookie || '(无 Cookie)');
+}
+
+// ==================== JWT ====================
+async function doLogin() {
+  const username = document.getElementById('login-user').value;
+  const password = document.getElementById('login-pass').value;
+  const el = document.getElementById('jwt-result');
+
+  el.innerHTML = '<span class="info">⏳ 登录中...</span>';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      storedToken = data.token;
+      localStorage.setItem('demo_token', data.token);
+      el.innerHTML = '<span class="success">✅ 登录成功！Token 已保存</span>\n\n' +
+        JSON.stringify(data, null, 2);
+    } else {
+      el.innerHTML = '<span class="error">❌ ' + data.message + '</span>';
+    }
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ 请求失败: ' + err.message + '</span>';
+  }
+}
+
+async function visitProfile() {
+  const token = storedToken || localStorage.getItem('demo_token');
+  const el = document.getElementById('jwt-result');
+
+  if (!token) {
+    el.innerHTML = '<span class="error">❌ 没有 Token！请先登录</span>';
+    return;
+  }
+
+  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
+  try {
+    const res = await fetch('/api/profile', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    const data = await res.json();
+    if (data.success) {
+      el.innerHTML = '<span class="success">✅ Token 验证通过！</span>\n\n' +
+        JSON.stringify(data, null, 2);
+    } else {
+      el.innerHTML = '<span class="error">❌ ' + data.message + '</span>';
+    }
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ 请求失败: ' + err.message + '</span>';
+  }
+}
+
+function parseJWT() {
+  const token = storedToken || localStorage.getItem('demo_token');
+  const el = document.getElementById('jwt-result');
+
+  if (!token) {
+    el.innerHTML = '<span class="error">❌ 没有 Token！请先登录</span>';
+    return;
+  }
+
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    el.innerHTML = '<span class="error">❌ 这不是一个有效的 JWT</span>';
+    return;
+  }
+
+  try {
+    const header = JSON.parse(atob(parts[0]));
+    const payload = JSON.parse(atob(parts[1]));
+    el.innerHTML =
+      '<span class="success">✅ JWT 结构解析</span>\n\n' +
+      '=== Header ===\n' + JSON.stringify(header, null, 2) + '\n\n' +
+      '=== Payload ===\n' + JSON.stringify(payload, null, 2) + '\n\n' +
+      '=== Signature ===\n' + parts[2].substring(0, 40) + '...\n\n' +
+      '⚠️ Payload 只是 Base64 编码，任何人都能解码！\n' +
+      '   安全性靠 Signature 保证（防篡改）';
+  } catch (e) {
+    el.innerHTML = '<span class="error">❌ 解析失败: ' + e.message + '</span>';
+  }
+}
+
+function clearToken() {
+  storedToken = '';
+  localStorage.removeItem('demo_token');
+  document.getElementById('jwt-result').innerHTML =
+    '<span class="info">🗑 Token 已清除</span>';
+}
+
+// ==================== CORS ====================
+async function testGet() {
+  const el = document.getElementById('cors-result');
+  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    el.innerHTML = '<span class="success">✅ GET 成功（简单请求，无预检）</span>\n\n' +
+      JSON.stringify(data, null, 2);
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+  }
+}
+
+async function testPost() {
+  const el = document.getElementById('cors-result');
+  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
+  try {
+    const res = await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '测试用户', time: new Date().toISOString() }),
+    });
+    const data = await res.json();
+    el.innerHTML = '<span class="success">✅ POST 成功！</span>\n' +
+      '<span class="info">💡 F12 → Network 可以看到先发了 OPTIONS 预检请求</span>\n\n' +
+      JSON.stringify(data, null, 2);
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+  }
+}
+
+async function testWithCredentials() {
+  const el = document.getElementById('cors-result');
+  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
+  try {
+    const res = await fetch('/api/data', { credentials: 'include' });
+    const data = await res.json();
+    el.innerHTML = '<span class="success">✅ 带凭证请求成功！</span>\n\n' +
+      JSON.stringify(data, null, 2);
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+  }
+}
+
+// ==================== 综合 ====================
+async function testAll() {
+  const token = storedToken || localStorage.getItem('demo_token');
+  const el = document.getElementById('all-result');
+  el.innerHTML = '<span class="info">⏳ 综合测试中...</span>';
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  try {
+    const res = await fetch('/api/all-demo', {
+      headers,
+      credentials: 'include',
+    });
+    const data = await res.json();
+    el.innerHTML = '<span class="success">✅ 综合请求成功！</span>\n\n' +
+      JSON.stringify(data, null, 2);
+  } catch (err) {
+    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+  }
+}
+
+// 页面加载时恢复 token
+storedToken = localStorage.getItem('demo_token') || '';
+</script>
+</body>
+</html>

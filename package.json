@@ -1,0 +1,15 @@
+{
+  "name": "cookie-cors-demo",
+  "version": "1.0.0",
+  "description": "Cookie、Token、JWT 和 CORS 演示项目 - 前后端一体",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cookie-parser": "^1.4.6",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5"
+  }
+}
