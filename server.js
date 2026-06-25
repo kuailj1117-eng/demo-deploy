@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // ==================== 中间件 ====================
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'docs')));
 
 // CORS 配置
 const corsOptions = {
@@ -120,7 +120,7 @@ app.get('/api/ping', (req, res) => {
 
 // ==================== 兜底路由 ====================
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'docs', 'index.html'));
 });
 
 // ==================== 启动 ====================
