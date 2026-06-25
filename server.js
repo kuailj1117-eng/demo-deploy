@@ -113,6 +113,11 @@ app.get('/api/tools/headers', (req, res) => {
   });
 });
 
+// 健康检查 ping（前端检测后端是否可达）
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok', time: Date.now() });
+});
+
 // ==================== 兜底路由 ====================
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
