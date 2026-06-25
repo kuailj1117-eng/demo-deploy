@@ -3,336 +3,927 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cookie / Token / JWT / CORS 综合演示</title>
+  <title>Dev工具箱 - 在线开发工具集合</title>
+  <meta name="description" content="免费在线开发工具：Base64编码、JSON格式化、时间戳转换、MD5加密、UUID生成、正则测试等22个实用工具">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* ===== 顶栏 ===== */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 24px 20px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+    }
+    .header h1 { font-size: 28px; margin-bottom: 4px; letter-spacing: 1px; }
+    .header .slogan { font-size: 14px; opacity: 0.85; margin-bottom: 16px; }
+
+    .search-box {
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: none;
+      border-radius: 24px;
+      font-size: 15px;
+      outline: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .search-box .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    /* ===== 分类标签 ===== */
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 20px;
       max-width: 900px;
       margin: 0 auto;
-      padding: 20px;
-      background: #f0f2f5;
     }
-    h1 { text-align: center; margin-bottom: 8px; color: #1a1a2e; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
-    .card {
+    .cat-tag {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #d1d5db;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .cat-tag:hover { border-color: #667eea; color: #667eea; }
+    .cat-tag.active { background: #667eea; color: #fff; border-color: #667eea; }
+
+    /* ===== 工具网格 ===== */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+    .tool-card {
       background: #fff;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .card h3 {
-      margin-bottom: 12px;
-      color: #1a1a2e;
-      border-bottom: 2px solid #4f46e5;
-      padding-bottom: 8px;
-    }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
+      transition: all 0.25s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1.5px solid transparent;
     }
-    button:hover { transform: translateY(-1px); }
-    .btn-primary { background: #4f46e5; color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
-    .btn-warning { background: #ea580c; color: #fff; }
-    .btn-danger { background: #dc2626; color: #fff; }
-    .btn-gray { background: #6b7280; color: #fff; }
+    .tool-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(102,126,234,0.18);
+      border-color: #667eea;
+    }
+    .tool-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .tool-card .name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .tool-card .desc { font-size: 12px; color: #888; line-height: 1.4; }
 
-    pre {
-      background: #1e1e2e;
-      color: #cdd6f4;
-      padding: 14px;
-      border-radius: 8px;
+    /* ===== 模态弹窗 ===== */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .overlay.show { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .modal-header .title { font-size: 18px; font-weight: 600; }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f3f4f6;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .modal-close:hover { background: #e5e7eb; }
+    .modal-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-body label {
       font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+    .modal-body textarea,
+    .modal-body input[type="text"],
+    .modal-body input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: "Consolas", "Courier New", "Noto Sans SC", monospace;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal-body textarea:focus,
+    .modal-body input:focus { border-color: #667eea; }
+    .modal-body textarea { min-height: 100px; }
+    .output-area {
+      background: #f8f9fb;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      min-height: 80px;
+      font-size: 14px;
+      font-family: "Consolas", "Courier New", "Noto Sans SC", monospace;
       white-space: pre-wrap;
       word-break: break-all;
-      max-height: 300px;
+      color: #333;
+      max-height: 200px;
       overflow-y: auto;
     }
-    .success { color: #16a34a; font-weight: bold; }
-    .error { color: #dc2626; font-weight: bold; }
-    .info { color: #4f46e5; font-weight: bold; }
-
-    input, textarea {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
+    .output-area.error { color: #dc2626; }
+    .output-area.success { color: #16a34a; }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
       font-size: 14px;
-      margin-bottom: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .tip {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: 8px 12px;
-      border-radius: 0 8px 8px 0;
-      margin-top: 8px;
-      font-size: 13px;
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .btn-secondary { background: #e5e7eb; color: #333; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-warning { background: #ea580c; color: #fff; }
+    .btn-small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+
+    .copy-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
     }
-    #origin-display {
+    .copy-toast.show { opacity: 1; }
+
+    .color-preview {
+      width: 100%;
+      height: 60px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .palette { display: flex; gap: 8px; flex-wrap: wrap; }
+    .palette-swatch {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 4px;
+      font-size: 11px;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      transition: transform 0.15s;
+    }
+    .palette-swatch:hover { transform: scale(1.08); }
+
+    .status-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .status-table th, .status-table td { padding: 6px 10px; border-bottom: 1px solid #eee; text-align: left; }
+    .status-table th { background: #f9fafb; font-weight: 600; }
+
+    .footer {
       text-align: center;
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 16px;
+      padding: 24px;
+      font-size: 12px;
+      color: #999;
     }
-    #origin-display strong { color: #4f46e5; }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+      font-size: 16px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .tool-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .tool-card { padding: 14px; }
+      .tool-card .icon { font-size: 24px; }
+      .modal { max-width: 100%; border-radius: 12px 12px 0 0; }
+    }
   </style>
 </head>
 <body>
 
-  <h1>🔐 Cookie / Token / JWT / CORS 演示</h1>
-  <p class="subtitle">前后端完整演示 — 打开 F12 看 Network 和 Console</p>
-  <p id="origin-display">📍 当前页面来源：<strong id="origin-text"></strong></p>
+  <!-- Toast -->
+  <div class="copy-toast" id="toast">✅ 已复制到剪贴板</div>
 
-  <!-- 1. Cookie 演示 -->
-  <div class="card">
-    <h3>1. Cookie 演示（前后端交互）</h3>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="frontendSetCookie()">前端设置 Cookie</button>
-      <button class="btn-success" onclick="backendSetCookie()">后端设置 Cookie</button>
-      <button class="btn-warning" onclick="backendReadCookie()">后端读取 Cookie</button>
-      <button class="btn-gray" onclick="readAllCookies()">查看所有 Cookie</button>
+  <!-- 顶栏 -->
+  <div class="header">
+    <h1>🔧 Dev工具箱</h1>
+    <p class="slogan">22个在线开发工具，打开即用，无需登录</p>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索工具... （如 JSON、时间戳、Base64）">
     </div>
-    <pre id="cookie-result">点击按钮测试 Cookie 功能...</pre>
-    <div class="tip">💡 Cookie 自动随请求发送；localStorage 不会自动发送，需要手动取出来放到请求里</div>
   </div>
 
-  <!-- 2. JWT Token 演示 -->
-  <div class="card">
-    <h3>2. Token / JWT 演示（登录 + 受保护接口）</h3>
-    <div style="display: flex; gap: 12px;">
-      <div style="flex: 1;">
-        <input id="login-user" type="text" placeholder="用户名 (admin / zhangsan)" value="admin">
-        <input id="login-pass" type="password" placeholder="密码 (123456)" value="123456">
-        <button class="btn-primary" onclick="doLogin()" style="width:100%;">🔑 登录获取 JWT</button>
+  <!-- 分类标签 -->
+  <div class="categories" id="categories"></div>
+
+  <!-- 工具网格 -->
+  <div class="tool-grid" id="toolGrid"></div>
+
+  <!-- 模态弹窗 -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="title" id="modalTitle"></span>
+        <button class="modal-close" id="modalClose">✕</button>
       </div>
-      <div style="flex: 1;">
-        <button class="btn-success" onclick="visitProfile()" style="width:100%;">🔒 访问受保护接口</button>
-        <button class="btn-warning" onclick="parseJWT()" style="width:100%; margin-top:8px;">🔍 解析 JWT 结构</button>
-        <button class="btn-gray" onclick="clearToken()" style="width:100%; margin-top:8px;">🗑 清除 Token</button>
-      </div>
+      <div class="modal-body" id="modalBody"></div>
     </div>
-    <pre id="jwt-result">点击按钮测试 JWT...</pre>
-    <div class="tip">💡 JWT = Base64(Header).Base64(Payload).签名，Payload 任何人都能解码看，但不能改</div>
   </div>
 
-  <!-- 3. CORS 演示 -->
-  <div class="card">
-    <h3>3. CORS 跨域演示</h3>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="testGet()">GET 请求（简单请求）</button>
-      <button class="btn-success" onclick="testPost()">POST JSON 请求（预检）</button>
-      <button class="btn-warning" onclick="testWithCredentials()">带凭证请求</button>
-    </div>
-    <pre id="cors-result">点击按钮测试 CORS...</pre>
-    <div class="tip">💡 POST JSON 会先发 OPTIONS 预检请求 → F12 Network 可以看到两个请求</div>
-  </div>
-
-  <!-- 4. 综合演示 -->
-  <div class="card">
-    <h3>4. 综合演示（Cookie + Token + CORS 一起）</h3>
-    <button class="btn-primary" onclick="testAll()">🚀 综合测试</button>
-    <pre id="all-result">点击按钮查看综合结果...</pre>
-  </div>
+  <div class="footer">Dev工具箱 · 所有数据仅在浏览器本地处理 · 安全无忧</div>
 
 <script>
-document.getElementById('origin-text').textContent = window.location.origin;
+// ==================== 工具定义 ====================
+const CATEGORIES = [
+  { id: 'all', name: '全部', emoji: '📦' },
+  { id: 'encode', name: '编码解码', emoji: '📁' },
+  { id: 'json', name: 'JSON 工具', emoji: '📝' },
+  { id: 'time', name: '时间工具', emoji: '🕐' },
+  { id: 'crypto', name: '加密哈希', emoji: '🔐' },
+  { id: 'network', name: '网络工具', emoji: '🌐' },
+  { id: 'color', name: '颜色工具', emoji: '🎨' },
+  { id: 'convert', name: '单位换算', emoji: '📊' },
+  { id: 'text', name: '文本工具', emoji: '🔤' },
+];
 
-let storedToken = '';
+const TOOLS = [
+  // ---- 编码解码 ----
+  { id:'base64', cat:'encode', name:'Base64 编码解码', desc:'Base64 编码与解码互转', icon:'🔡',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要编码/解码的文本..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('base64','encode')">编码 Encode</button>
+          <button class="btn btn-secondary" onclick="toolAction('base64','decode')">解码 Decode</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <label>输出结果</label>
+        <div class="output-area" id="out"></div>`; },
+    encode() { try { setOut(btoa(unescape(encodeURIComponent(getInp())))) } catch(e) { setOut(e.message,'error') } },
+    decode() { try { setOut(decodeURIComponent(escape(atob(getInp().replace(/\s/g,''))))); } catch(e) { setOut('解码失败：输入不是有效的 Base64','error') } }
+  },
 
-// ==================== Cookie ====================
-function frontendSetCookie() {
-  document.cookie = "demo_cookie=frontend_set_value; path=/; max-age=3600";
-  document.getElementById('cookie-result').innerHTML =
-    '<span class="success">✅ 前端已设置 Cookie: demo_cookie=frontend_set_value</span>';
-}
+  { id:'urlcode', cat:'encode', name:'URL 编码解码', desc:'encodeURIComponent / decodeURIComponent', icon:'🔗',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要编码/解码的 URL 或文本..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('urlcode','encode')">编码 Encode</button>
+          <button class="btn btn-secondary" onclick="toolAction('urlcode','decode')">解码 Decode</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <label>输出结果</label>
+        <div class="output-area" id="out"></div>`; },
+    encode() { setOut(encodeURIComponent(getInp())) },
+    decode() { try { setOut(decodeURIComponent(getInp())) } catch(e) { setOut('解码失败：输入不是有效的 URL 编码','error') } }
+  },
 
-async function backendSetCookie() {
-  const res = await fetch('/api/set-cookie', { credentials: 'include' });
-  const data = await res.json();
-  document.getElementById('cookie-result').innerHTML =
-    '<span class="success">✅ ' + data.message + '</span>\n' +
-    '提示：打开 F12 → Application → Cookies 查看';
-}
+  { id:'unicode', cat:'encode', name:'Unicode 转换', desc:'字符 ↔ \\uXXXX 互转', icon:'🔤',
+    render(e) {
+      e.innerHTML = `
+        <label>输入</label>
+        <textarea id="inp" placeholder="输入字符或 \\uXXXX 编码..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('unicode','toUnicode')">字符 → Unicode</button>
+          <button class="btn btn-secondary" onclick="toolAction('unicode','fromUnicode')">Unicode → 字符</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <label>输出结果</label>
+        <div class="output-area" id="out"></div>`; },
+    toUnicode() { setOut(getInp().split('').map(c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).join('')) },
+    fromUnicode() { setOut(getInp().replace(/\\u([0-9a-fA-F]{4})/g,(m,p)=>String.fromCharCode(parseInt(p,16)))) }
+  },
 
-async function backendReadCookie() {
-  const res = await fetch('/api/read-cookie', { credentials: 'include' });
-  const data = await res.json();
-  document.getElementById('cookie-result').innerHTML =
-    JSON.stringify(data, null, 2);
-}
+  // ---- JSON 工具 ----
+  { id:'jsonfmt', cat:'json', name:'JSON 格式化', desc:'缩进美化 JSON，语法高亮', icon:'✨',
+    render(e) {
+      e.innerHTML = `
+        <label>输入 JSON 字符串</label>
+        <textarea id="inp" placeholder='{"name":"张三","age":25}'></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('jsonfmt','fmt')">格式化</button>
+          <button class="btn btn-secondary" onclick="toolAction('jsonfmt','min')">压缩</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <label>输出结果</label>
+        <div class="output-area" id="out"></div>`; },
+    fmt() { try { setOut(JSON.stringify(JSON.parse(getInp()),null,2)) } catch(e) { setOut('JSON 格式错误：'+e.message,'error') } },
+    min() { try { setOut(JSON.stringify(JSON.parse(getInp()))) } catch(e) { setOut('JSON 格式错误：'+e.message,'error') } }
+  },
 
-function readAllCookies() {
-  document.getElementById('cookie-result').innerHTML =
-    '当前所有 Cookie:\n' + (document.cookie || '(无 Cookie)');
-}
-
-// ==================== JWT ====================
-async function doLogin() {
-  const username = document.getElementById('login-user').value;
-  const password = document.getElementById('login-pass').value;
-  const el = document.getElementById('jwt-result');
-
-  el.innerHTML = '<span class="info">⏳ 登录中...</span>';
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      storedToken = data.token;
-      localStorage.setItem('demo_token', data.token);
-      el.innerHTML = '<span class="success">✅ 登录成功！Token 已保存</span>\n\n' +
-        JSON.stringify(data, null, 2);
-    } else {
-      el.innerHTML = '<span class="error">❌ ' + data.message + '</span>';
+  { id:'jsonval', cat:'json', name:'JSON 校验', desc:'检测 JSON 是否合法，定位错误', icon:'✅',
+    render(e) {
+      e.innerHTML = `
+        <label>输入 JSON 字符串</label>
+        <textarea id="inp" placeholder="粘贴 JSON 进行校验..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('jsonval','check')">校验</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    check() {
+      const s = getInp().trim();
+      if (!s) return setOut('请输入 JSON 字符串','error');
+      try { const o=JSON.parse(s); setOut('✅ JSON 合法！\n\n类型：'+ (Array.isArray(o)?'数组':'对象') + '\n键数量：' + (typeof o==='object'&&o!==null?Object.keys(o).length:'-') + '\n大小：'+ s.length +' 字符','success') }
+      catch(e) {
+        const m=e.message; let pos=m.match(/position\s+(\d+)/);
+        if(pos){ const p=parseInt(pos[1]); setOut('❌ JSON 不合法\n\n错误：'+m+'\n错误位置附近：\n...'+s.substring(Math.max(0,p-20),p)+'【← 这里】'+s.substring(p,p+20)+'...','error') }
+        else setOut('❌ JSON 不合法\n\n'+m,'error');
+      }
     }
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ 请求失败: ' + err.message + '</span>';
-  }
-}
+  },
 
-async function visitProfile() {
-  const token = storedToken || localStorage.getItem('demo_token');
-  const el = document.getElementById('jwt-result');
+  // ---- 时间工具 ----
+  { id:'timestamp', cat:'time', name:'时间戳转换', desc:'Unix 时间戳 ↔ 日期时间', icon:'⏱️',
+    render(e) {
+      e.innerHTML = `
+        <label>输入时间戳（秒/毫秒）或日期时间</label>
+        <input type="text" id="inp" placeholder="1700000000 或 2024-01-01 00:00:00">
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('timestamp','ts2date')">时间戳 → 日期</button>
+          <button class="btn btn-secondary" onclick="toolAction('timestamp','date2ts')">日期 → 时间戳</button>
+          <button class="btn btn-secondary" onclick="toolAction('timestamp','now')">填入当前时间戳</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    ts2date() {
+      let ts = parseInt(getInp());
+      if (isNaN(ts)) return setOut('请输入有效的时间戳','error');
+      if (ts > 9999999999999) ts = Math.floor(ts/1000); // 毫秒→秒
+      else if (ts < 100000000000) ts = ts * 1000; // 假设是秒
+      const d = new Date(ts * 1000);
+      setOut('时间戳：' + ts + '（秒）\n' +
+        '本地时间：' + d.toLocaleString('zh-CN') + '\n' +
+        'UTC 时间：' + d.toISOString() + '\n' +
+        '星期：' + ['日','一','二','三','四','五','六'][d.getDay()] + '\n' +
+        '毫秒时间戳：' + ts * 1000);
+    },
+    date2ts() {
+      const d = new Date(getInp());
+      if (isNaN(d.getTime())) return setOut('日期格式无效，请用格式：2024-01-01 或 2024-01-01 00:00:00','error');
+      setOut('秒时间戳：' + Math.floor(d.getTime()/1000) + '\n毫秒时间戳：' + d.getTime() + '\nISO：' + d.toISOString());
+    },
+    now() { document.getElementById('inp').value = Math.floor(Date.now()/1000).toString(); }
+  },
 
-  if (!token) {
-    el.innerHTML = '<span class="error">❌ 没有 Token！请先登录</span>';
-    return;
-  }
-
-  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
-  try {
-    const res = await fetch('/api/profile', {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
-    const data = await res.json();
-    if (data.success) {
-      el.innerHTML = '<span class="success">✅ Token 验证通过！</span>\n\n' +
-        JSON.stringify(data, null, 2);
-    } else {
-      el.innerHTML = '<span class="error">❌ ' + data.message + '</span>';
+  { id:'datediff', cat:'time', name:'日期计算器', desc:'计算日期差 / N 天后日期', icon:'📅',
+    render(e) {
+      e.innerHTML = `
+        <label>日期一</label><input type="date" id="date1">
+        <label>日期二 / 天数</label><input type="text" id="date2" placeholder="2024-12-25 或 +30 或 -7">
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('datediff','diff')">计算相差天数</button>
+          <button class="btn btn-secondary" onclick="toolAction('datediff','add')">日期 ± 天数</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    diff() {
+      const d1=new Date(document.getElementById('date1').value), d2=new Date(document.getElementById('date2').value);
+      if(isNaN(d1)||isNaN(d2)) return setOut('请填写两个有效日期','error');
+      const diff=Math.abs(d2-d1), days=Math.floor(diff/86400000);
+      setOut('日期一：'+d1.toLocaleDateString('zh-CN')+'\n日期二：'+d2.toLocaleDateString('zh-CN')+'\n相差：'+days+' 天\n共计：'+diff+' 毫秒');
+    },
+    add() {
+      const d1=new Date(document.getElementById('date1').value);
+      if(isNaN(d1)) return setOut('请填写有效日期','error');
+      const days=parseInt(document.getElementById('date2').value);
+      if(isNaN(days)) return setOut('天数请填数字（如 +30 或 -7）','error');
+      const d2=new Date(d1.getTime()+days*86400000);
+      setOut('基准日期：'+d1.toLocaleDateString('zh-CN')+'\n偏移天数：'+(days>0?'+'+days:days)+'\n结果日期：'+d2.toLocaleDateString('zh-CN')+'\n星期：'+['日','一','二','三','四','五','六'][d2.getDay()]);
     }
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ 请求失败: ' + err.message + '</span>';
-  }
+  },
+
+  { id:'nowtime', cat:'time', name:'当前时间', desc:'实时 UTC / 本地时间 / 时区', icon:'🕒',
+    render(e) {
+      e.innerHTML = `<div class="output-area" id="out"></div>`;
+      this._timer = setInterval(() => {
+        const n=new Date();
+        document.getElementById('out').innerHTML =
+          '🕐 本地时间：' + n.toLocaleString('zh-CN') + '\n' +
+          '🌍 UTC 时间：' + n.toUTCString() + '\n' +
+          '📐 时区偏移：UTC' + (n.getTimezoneOffset()<=0?'+':'') + (-n.getTimezoneOffset()/60).toFixed(1) + '\n' +
+          '📏 Unix 秒：' + Math.floor(n.getTime()/1000) + '\n' +
+          '📏 Unix 毫秒：' + n.getTime() + '\n' +
+          '📅 第' + Math.ceil((n-new Date(n.getFullYear(),0,0))/86400000) + '天 / 周' + ['日','一','二','三','四','五','六'][n.getDay()];
+      }, 200);
+    },
+    destroy() { if(this._timer) clearInterval(this._timer) }
+  },
+
+  // ---- 加密哈希 ----
+  { id:'md5', cat:'crypto', name:'MD5 哈希', desc:'计算文本 MD5 值', icon:'🔑',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要计算 MD5 的文本..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('md5','hash')">计算 MD5</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    async hash() { setOut(await hashText(getInp(), 'MD5')) }
+  },
+
+  { id:'sha256', cat:'crypto', name:'SHA256 哈希', desc:'计算文本 SHA-256 值', icon:'🔒',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要计算 SHA-256 的文本..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('sha256','hash')">计算 SHA256</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    async hash() { setOut(await hashText(getInp(), 'SHA-256')) }
+  },
+
+  { id:'uuid', cat:'crypto', name:'UUID 生成器', desc:'生成 v4 随机 UUID', icon:'🆔',
+    render(e) {
+      e.innerHTML = `
+        <label>生成数量</label>
+        <input type="number" id="count" value="1" min="1" max="50">
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('uuid','gen')">生成 UUID</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制全部</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    gen() { let n=parseInt(document.getElementById('count').value)||1; n=Math.min(Math.max(n,1),50); let a=[]; for(let i=0;i<n;i++) a.push(crypto.randomUUID()); setOut(a.join('\n')) }
+  },
+
+  { id:'passgen', cat:'crypto', name:'随机密码生成', desc:'可调长度+字符集', icon:'🔐',
+    render(e) {
+      e.innerHTML = `
+        <label>密码长度</label><input type="number" id="len" value="16" min="4" max="128">
+        <label>字符集</label>
+        <div style="font-size:13px;">
+          <label><input type="checkbox" id="cs1" checked> 小写字母 (a-z)</label>
+          <label><input type="checkbox" id="cs2" checked> 大写字母 (A-Z)</label>
+          <label><input type="checkbox" id="cs3" checked> 数字 (0-9)</label>
+          <label><input type="checkbox" id="cs4"> 特殊符号 (!@#$%)</label>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('passgen','gen')">生成密码</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制密码</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    gen() {
+      let cs='';
+      if(document.getElementById('cs1').checked) cs+='abcdefghijklmnopqrstuvwxyz';
+      if(document.getElementById('cs2').checked) cs+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      if(document.getElementById('cs3').checked) cs+='0123456789';
+      if(document.getElementById('cs4').checked) cs+='!@#$%^&*()_+-=[]{}|;:,.<>?';
+      if(!cs) return setOut('请至少选一种字符集','error');
+      let len=parseInt(document.getElementById('len').value)||16, pw='';
+      const arr=new Uint32Array(len); crypto.getRandomValues(arr);
+      for(let i=0;i<len;i++) pw+=cs[arr[i]%cs.length];
+      setOut(pw);
+    }
+  },
+
+  // ---- 网络工具 ----
+  { id:'ipinfo', cat:'network', name:'IP 查询', desc:'查询当前 IP 归属地（后端代理）', icon:'🌍',
+    render(e) {
+      e.innerHTML = `
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('ipinfo','query')">查询我的 IP</button>
+        </div>
+        <div class="output-area" id="out">点击按钮查询...</div>`; },
+    async query() {
+      setOut('⏳ 查询中...');
+      try { const r=await fetch('/api/tools/ip'); const d=await r.json(); setOut(JSON.stringify(d,null,2)) }
+      catch(e) { setOut('查询失败：'+e.message,'error') }
+    }
+  },
+
+  { id:'uaparse', cat:'network', name:'UA 解析', desc:'解析浏览器/操作系统', icon:'🖥️',
+    render(e) {
+      e.innerHTML = `
+        <label>User-Agent 字符串（留空则自动获取）</label>
+        <textarea id="inp" placeholder="留空自动获取当前浏览器 UA..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('uaparse','parse')">解析</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    async parse() {
+      setOut('⏳ 解析中...');
+      const ua=getInp()||navigator.userAgent;
+      try { const r=await fetch('/api/tools/ua',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ua})}); const d=await r.json(); setOut(JSON.stringify(d,null,2)) }
+      catch(e) { setOut('解析失败：'+e.message,'error') }
+    }
+  },
+
+  { id:'httpcodes', cat:'network', name:'HTTP 状态码', desc:'常见 HTTP 状态码速查表', icon:'📡',
+    render(e) {
+      const codes=[
+        ['200','OK','请求成功'],['201','Created','已创建'],['301','Moved Permanently','永久重定向'],['302','Found','临时重定向'],
+        ['304','Not Modified','未修改（缓存）'],['400','Bad Request','请求参数错误'],['401','Unauthorized','未授权'],['403','Forbidden','禁止访问'],
+        ['404','Not Found','未找到'],['405','Method Not Allowed','方法不允许'],['408','Request Timeout','请求超时'],['429','Too Many Requests','请求过多'],
+        ['500','Internal Server Error','服务器内部错误'],['502','Bad Gateway','网关错误'],['503','Service Unavailable','服务不可用'],['504','Gateway Timeout','网关超时'],
+      ];
+      let html='<table class="status-table"><tr><th>状态码</th><th>名称</th><th>说明</th></tr>';
+      codes.forEach(([c,n,d])=>{ html+=`<tr><td><b>${c}</b></td><td>${n}</td><td>${d}</td></tr>`; });
+      html+='</table>';
+      e.innerHTML=html;
+    }
+  },
+
+  // ---- 颜色工具 ----
+  { id:'rgbhex', cat:'color', name:'RGB ↔ HEX', desc:'颜色格式双向转换+预览', icon:'🎨',
+    render(e) {
+      e.innerHTML = `
+        <label>输入颜色值</label>
+        <input type="text" id="inp" placeholder="#667eea 或 rgb(102,126,234) 或 102,126,234">
+        <div class="color-preview" id="preview" style="background:#667eea;"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('rgbhex','auto')">自动识别转换</button>
+          <button class="btn btn-secondary" onclick="toolAction('rgbhex','toHex')">→ HEX</button>
+          <button class="btn btn-secondary" onclick="toolAction('rgbhex','toRgb')">→ RGB</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    auto() { const v=getInp().trim(); if(v.startsWith('#')) this.toRgb(); else this.toHex(); },
+    toHex() { const p=this._parseRgb(getInp()); if(!p) return setOut('无法解析，请输入如 102,126,234 或 rgb(102,126,234)','error'); const h='#'+[p[0],p[1],p[2]].map(x=>x.toString(16).padStart(2,'0')).join(''); document.getElementById('preview').style.background=h; setOut(h) },
+    toRgb() { const h=getInp().trim().replace('#',''); if(!/^[0-9a-fA-F]{6}$/.test(h)) return setOut('请输入有效的 HEX 颜色，如 #667eea','error'); const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16); document.getElementById('preview').style.background='#'+h; setOut(`rgb(${r}, ${g}, ${b})`) },
+    _parseRgb(v) { let m=v.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/); if(m) return [parseInt(m[1]),parseInt(m[2]),parseInt(m[3])]; m=v.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/); if(m) return [parseInt(m[1]),parseInt(m[2]),parseInt(m[3])]; return null; }
+  },
+
+  { id:'palette', cat:'color', name:'随机调色板', desc:'一键生成 5 色搭配方案', icon:'🎭',
+    render(e) {
+      e.innerHTML = `
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('palette','gen')">🎲 随机生成</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制全部色值</button>
+        </div>
+        <div class="palette" id="paletteBox"></div>
+        <div class="output-area" id="out"></div>`; },
+    gen() {
+      const colors=[], box=document.getElementById('paletteBox'); box.innerHTML='';
+      for(let i=0;i<5;i++) { const h='#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); colors.push(h); const d=document.createElement('div'); d.className='palette-swatch'; d.style.background=h; d.textContent=h; d.onclick=()=>{ copyText(h); }; box.appendChild(d); }
+      setOut(colors.join('\n'));
+    }
+  },
+
+  // ---- 单位换算 ----
+  { id:'unitlen', cat:'convert', name:'长度换算', desc:'米/千米/英尺/英里/英寸/厘米/毫米', icon:'📏',
+    render(e) { this._renderUnit(e,'长度',{m:1,km:1000,cm:0.01,mm:0.001,ft:0.3048,in:0.0254,mi:1609.344}); },
+    _renderUnit(e,label,units) {
+      let opts=Object.keys(units).map(u=>`<option value="${u}">${u}</option>`).join('');
+      e.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center;">
+          <input type="number" id="val" value="1" style="flex:1;">
+          <select id="from">${opts}</select>
+          <span>→</span>
+          <select id="to">${opts.replace('selected','')}</select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('unitlen','calc')">换算</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`;
+      this._units = units;
+    },
+    calc() {
+      const v=parseFloat(document.getElementById('val').value), f=document.getElementById('from').value, t=document.getElementById('to').value, u=this._units;
+      if(isNaN(v)) return setOut('请输入有效数字','error');
+      setOut(v+' '+f+' = '+(v*u[f]/u[t]).toFixed(6)+' '+t);
+    }
+  },
+
+  { id:'unitwt', cat:'convert', name:'重量换算', desc:'千克/克/磅/盎司', icon:'⚖️',
+    render(e) { this._renderUnit(e,'重量',{kg:1,g:0.001,lb:0.4536,oz:0.02835}); },
+    calc() {
+      const v=parseFloat(document.getElementById('val').value), f=document.getElementById('from').value, t=document.getElementById('to').value, u=this._units;
+      if(isNaN(v)) return setOut('请输入有效数字','error');
+      setOut(v+' '+f+' = '+(v*u[f]/u[t]).toFixed(6)+' '+t);
+    }
+  },
+
+  { id:'unitstore', cat:'convert', name:'存储容量换算', desc:'Byte/KB/MB/GB/TB', icon:'💾',
+    render(e) { this._renderUnit(e,'存储',{B:1,KB:1024,MB:1048576,GB:1073741824,TB:1099511627776}); },
+    calc() {
+      const v=parseFloat(document.getElementById('val').value), f=document.getElementById('from').value, t=document.getElementById('to').value, u=this._units;
+      if(isNaN(v)) return setOut('请输入有效数字','error');
+      setOut(v+' '+f+' = '+(v*u[f]/u[t]).toFixed(6)+' '+t);
+    }
+  },
+
+  { id:'unittemp', cat:'convert', name:'温度换算', desc:'摄氏度 ℃ ↔ 华氏度 ℉ ↔ 开尔文 K', icon:'🌡️',
+    render(e) {
+      e.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center;">
+          <input type="number" id="val" value="0" style="flex:1;">
+          <select id="from"><option value="c">℃ 摄氏</option><option value="f">℉ 华氏</option><option value="k">K 开尔文</option></select>
+          <span>→</span>
+          <select id="to"><option value="c">℃ 摄氏</option><option value="f">℉ 华氏</option><option value="k">K 开尔文</option></select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('unittemp','calc')">换算</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    calc() {
+      const v=parseFloat(document.getElementById('val').value), f=document.getElementById('from').value, t=document.getElementById('to').value;
+      if(isNaN(v)) return setOut('请输入有效数字','error');
+      let celsius;
+      if(f==='c') celsius=v; else if(f==='f') celsius=(v-32)*5/9; else celsius=v-273.15;
+      let result;
+      if(t==='c') result=celsius; else if(t==='f') result=celsius*9/5+32; else result=celsius+273.15;
+      setOut(v+' '+{c:'℃',f:'℉',k:'K'}[f]+' = '+result.toFixed(2)+' '+{c:'℃',f:'℉',k:'K'}[t]);
+    }
+  },
+
+  // ---- 文本工具 ----
+  { id:'wordcount', cat:'text', name:'字数统计', desc:'中英文混合字数/字符/行数', icon:'📝',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要统计的文本..." oninput="toolAction('wordcount','count')"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    count() {
+      const s=getInp();
+      const chineseChars=(s.match(/[一-鿿]/g)||[]).length;
+      const englishWords=(s.match(/[a-zA-Z]+/g)||[]).length;
+      const totalChars=s.length;
+      const lines=s?s.split('\n').length:0;
+      const bytes=new Blob([s]).size;
+      setOut('总字符数：'+totalChars+'\n中文字符：'+chineseChars+'\n英文单词：'+englishWords+'\n行数：'+lines+'\n字节数：'+bytes);
+    }
+  },
+
+  { id:'caseconv', cat:'text', name:'大小写转换', desc:'大写/小写/首字母/驼峰/下划线', icon:'🔠',
+    render(e) {
+      e.innerHTML = `
+        <label>输入文本</label>
+        <textarea id="inp" placeholder="输入要转换的文本..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('caseconv','upper')">全大写</button>
+          <button class="btn btn-primary" onclick="toolAction('caseconv','lower')">全小写</button>
+          <button class="btn btn-secondary" onclick="toolAction('caseconv','capital')">首字母大写</button>
+          <button class="btn btn-secondary" onclick="toolAction('caseconv','camel')">驼峰命名</button>
+          <button class="btn btn-secondary" onclick="toolAction('caseconv','snake')">下划线命名</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+          <button class="btn btn-success btn-copy" data-from="out">📋 复制结果</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    upper() { setOut(getInp().toUpperCase()) },
+    lower() { setOut(getInp().toLowerCase()) },
+    capital() { setOut(getInp().replace(/(^|\s)\S/g,c=>c.toUpperCase())) },
+    camel() { setOut(getInp().replace(/[-_\s]+(.)?/g,(_,c)=>c?c.toUpperCase():'').replace(/^./,c=>c.toLowerCase())) },
+    snake() { setOut(getInp().replace(/([A-Z])/g,'_$1').replace(/[-\s]+/g,'_').replace(/^_/,'').toLowerCase()) }
+  },
+
+  { id:'regextest', cat:'text', name:'正则测试', desc:'在线正则表达式测试+匹配高亮', icon:'🔍',
+    render(e) {
+      e.innerHTML = `
+        <label>正则表达式（不带前后的 /）</label>
+        <input type="text" id="regex" placeholder="例如：\\d{4}-\\d{2}-\\d{2}">
+        <label>修饰符</label>
+        <div style="font-size:13px;">
+          <label><input type="checkbox" id="flagG" checked> g (全局)</label>
+          <label><input type="checkbox" id="flagI"> i (忽略大小写)</label>
+          <label><input type="checkbox" id="flagM"> m (多行)</label>
+        </div>
+        <label>测试文本</label>
+        <textarea id="inp" placeholder="输入要测试的文本..." oninput="toolAction('regextest','testLive')"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="toolAction('regextest','test')">测试匹配</button>
+          <button class="btn btn-secondary" onclick="clearAll()">清空</button>
+        </div>
+        <div class="output-area" id="out"></div>`; },
+    test() { this._run(true) },
+    testLive() { this._run(false) },
+    _run(full) {
+      const reStr=document.getElementById('regex').value;
+      if(!reStr) return setOut('请输入正则表达式','error');
+      let flags='';
+      if(document.getElementById('flagG').checked) flags+='g';
+      if(document.getElementById('flagI').checked) flags+='i';
+      if(document.getElementById('flagM').checked) flags+='m';
+      try { const re=new RegExp(reStr,flags); const txt=getInp(); const matches=txt.match(re);
+        if(!matches) setOut('❌ 无匹配');
+        else setOut('✅ 匹配 ' + matches.length + ' 处：\n' + matches.map((m,i)=>'  ['+(i+1)+'] '+m).join('\n'));
+      } catch(e) { setOut('正则语法错误：'+e.message,'error') }
+    }
+  },
+];
+
+// ==================== 全局状态 ====================
+let activeCat = 'all';
+let currentTool = null;
+let activeTimer = null;
+
+// ==================== 初始化 ====================
+function init() {
+  renderCategories();
+  renderTools();
+  document.getElementById('searchInput').addEventListener('input', renderTools);
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('overlay').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+  document.addEventListener('keydown', function(e) {
+    if(e.ctrlKey && e.key==='Enter' && currentTool) { e.preventDefault();
+      const btn=document.querySelector('#modalBody .btn-primary');
+      if(btn) btn.click();
+    }
+    if(e.key==='Escape') closeModal();
+  });
+  // 委托复制按钮
+  document.addEventListener('click', function(e) {
+    if(e.target.classList.contains('btn-copy')) {
+      const from=e.target.dataset.from;
+      const el=document.getElementById(from);
+      if(el) { copyText(el.textContent); }
+    }
+  });
 }
-
-function parseJWT() {
-  const token = storedToken || localStorage.getItem('demo_token');
-  const el = document.getElementById('jwt-result');
-
-  if (!token) {
-    el.innerHTML = '<span class="error">❌ 没有 Token！请先登录</span>';
-    return;
-  }
-
-  const parts = token.split('.');
-  if (parts.length !== 3) {
-    el.innerHTML = '<span class="error">❌ 这不是一个有效的 JWT</span>';
-    return;
-  }
-
-  try {
-    const header = JSON.parse(atob(parts[0]));
-    const payload = JSON.parse(atob(parts[1]));
-    el.innerHTML =
-      '<span class="success">✅ JWT 结构解析</span>\n\n' +
-      '=== Header ===\n' + JSON.stringify(header, null, 2) + '\n\n' +
-      '=== Payload ===\n' + JSON.stringify(payload, null, 2) + '\n\n' +
-      '=== Signature ===\n' + parts[2].substring(0, 40) + '...\n\n' +
-      '⚠️ Payload 只是 Base64 编码，任何人都能解码！\n' +
-      '   安全性靠 Signature 保证（防篡改）';
-  } catch (e) {
-    el.innerHTML = '<span class="error">❌ 解析失败: ' + e.message + '</span>';
-  }
-}
-
-function clearToken() {
-  storedToken = '';
-  localStorage.removeItem('demo_token');
-  document.getElementById('jwt-result').innerHTML =
-    '<span class="info">🗑 Token 已清除</span>';
-}
-
-// ==================== CORS ====================
-async function testGet() {
-  const el = document.getElementById('cors-result');
-  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
-  try {
-    const res = await fetch('/api/data');
-    const data = await res.json();
-    el.innerHTML = '<span class="success">✅ GET 成功（简单请求，无预检）</span>\n\n' +
-      JSON.stringify(data, null, 2);
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
-  }
-}
-
-async function testPost() {
-  const el = document.getElementById('cors-result');
-  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
-  try {
-    const res = await fetch('/api/data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: '测试用户', time: new Date().toISOString() }),
+function renderCategories() {
+  const el=document.getElementById('categories');
+  el.innerHTML = CATEGORIES.map(c =>
+    `<span class="cat-tag${c.id===activeCat?' active':''}" data-cat="${c.id}">${c.emoji} ${c.name}</span>`
+  ).join('');
+  el.querySelectorAll('.cat-tag').forEach(tag => {
+    tag.addEventListener('click', function() {
+      activeCat = this.dataset.cat;
+      renderCategories();
+      renderTools();
     });
-    const data = await res.json();
-    el.innerHTML = '<span class="success">✅ POST 成功！</span>\n' +
-      '<span class="info">💡 F12 → Network 可以看到先发了 OPTIONS 预检请求</span>\n\n' +
-      JSON.stringify(data, null, 2);
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
-  }
+  });
 }
-
-async function testWithCredentials() {
-  const el = document.getElementById('cors-result');
-  el.innerHTML = '<span class="info">⏳ 请求中...</span>';
-  try {
-    const res = await fetch('/api/data', { credentials: 'include' });
-    const data = await res.json();
-    el.innerHTML = '<span class="success">✅ 带凭证请求成功！</span>\n\n' +
-      JSON.stringify(data, null, 2);
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
-  }
-}
-
-// ==================== 综合 ====================
-async function testAll() {
-  const token = storedToken || localStorage.getItem('demo_token');
-  const el = document.getElementById('all-result');
-  el.innerHTML = '<span class="info">⏳ 综合测试中...</span>';
-
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-
-  try {
-    const res = await fetch('/api/all-demo', {
-      headers,
-      credentials: 'include',
+function renderTools() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = TOOLS.filter(t => {
+    if (activeCat !== 'all' && t.cat !== activeCat) return false;
+    if (q && !t.name.toLowerCase().includes(q) && !t.desc.toLowerCase().includes(q) && !t.cat.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const grid = document.getElementById('toolGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">😕 没有匹配的工具，换个关键词试试</div>';
+  } else {
+    grid.innerHTML = filtered.map(t =>
+      `<div class="tool-card" data-tool="${t.id}">
+        <div class="icon">${t.icon}</div>
+        <div class="name">${t.name}</div>
+        <div class="desc">${t.desc}</div>
+      </div>`
+    ).join('');
+    grid.querySelectorAll('.tool-card').forEach(card => {
+      card.addEventListener('click', function() { openTool(this.dataset.tool); });
     });
-    const data = await res.json();
-    el.innerHTML = '<span class="success">✅ 综合请求成功！</span>\n\n' +
-      JSON.stringify(data, null, 2);
-  } catch (err) {
-    el.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
   }
 }
 
-// 页面加载时恢复 token
-storedToken = localStorage.getItem('demo_token') || '';
+// ==================== 模态弹窗 ====================
+function openTool(toolId) {
+  const tool = TOOLS.find(t => t.id === toolId);
+  if (!tool) return;
+  if (currentTool && currentTool.destroy) currentTool.destroy();
+  currentTool = tool;
+  document.getElementById('modalTitle').textContent = tool.icon + ' ' + tool.name;
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+  tool.render(body);
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal() {
+  if (currentTool && currentTool.destroy) currentTool.destroy();
+  currentTool = null;
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ==================== 工具调用 ====================
+function toolAction(toolId, action) {
+  const tool = TOOLS.find(t => t.id === toolId);
+  if (tool && tool[action]) tool[action]();
+}
+
+// ==================== 辅助函数 ====================
+function getInp() {
+  const el = document.getElementById('inp');
+  return el ? el.value : '';
+}
+function setOut(text, cls) {
+  const el = document.getElementById('out');
+  if (el) { el.textContent = text; el.className = 'output-area'; if (cls) el.classList.add(cls); }
+}
+function clearAll() {
+  const inp = document.getElementById('inp'), out = document.getElementById('out');
+  if (inp) inp.value = '';
+  if (out) { out.textContent = ''; out.className = 'output-area'; }
+}
+async function hashText(text, algo) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest(algo, enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function copyText(text) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }).catch(() => {});
+}
+
+// ==================== 启动 ====================
+init();
 </script>
 </body>
 </html>
